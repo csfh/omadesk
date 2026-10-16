@@ -11,25 +11,17 @@
       _||     ||_
 ```
 
-Named-desk overlay for Omarchy Quattro. A desk is the current 1–10
-workspaces, given a name. Switching parks this room onto named special
-workspaces `special:omadesk-<id>-N` (the same kind of hidden space as
-the scratchpad, so Super+Tab never lands there) and brings the other
-room back onto 1–10. Each workspace is put back on the monitor it was
-on; a missing display is skipped. The bar still shows 1 2 3. The
-scratchpad itself (`special:scratchpad`) stays global and is never
-parked, restored, or stored.
+Workspace manager overlay for Omarchy Quattro. A desk here is an ordinary
+Hyprland workspace, 1–10. The overlay shows all ten as tiles in a fixed
+order, 1–5 on top and 6–10 below, so a workspace never changes place when it
+fills up or empties. Occupied ones are drawn from the real window geometry,
+with app icons, at the monitor's aspect ratio; the rest are empty slots you can
+drop windows onto. Nothing is
+parked, saved or restored: Hyprland owns placement, and the overlay reads it
+fresh every time it opens. Scratchpad and other special workspaces are never
+shown or touched.
 
 ![Desks picker](preview.png)
-
-Live truth while the session is alive is parked window addresses. Two
-Chromiums on two workspaces work during the day because we move those
-addresses. A save stores class, exec, Chromium profile, terminal cwd and
-command, and window size. After a reboot, switching into that desk
-relaunches those windows (`chromium --profile-directory=… --new-window`,
-a terminal with its directory and command, floating size and position).
-Workspace tiles show the tiled layout from window geometry, with app
-icons, two per row at the monitor's aspect ratio.
 
 ## Install
 
@@ -40,7 +32,7 @@ omarchy plugin add https://github.com/modoterra/omadesk.git --enable
 From this checkout:
 
 ```sh
-omarchy plugin add /home/hallas/Work/modoterra/omadesk --enable
+omarchy plugin add /path/to/omadesk --enable
 ```
 
 There is no installer script. The plugin is QML + JavaScript only.
@@ -69,19 +61,14 @@ o.bind("SUPER + D", "Desks", "omarchy-shell shell toggle com.mdtrr.omadesk")
 | Key | Action |
 | --- | --- |
 | Super+D | toggle overlay |
-| / | start filter (Esc leaves) |
+| / | start filter by workspace number or app (Esc leaves) |
 | j / k, arrows, h l | move cursor |
-| 1–9 | jump to card |
-| click a workspace tile | switch onto that workspace |
-| drag a window pane onto another tile | move that window on this desk |
-| drag a pane onto Empty | put it on the next free workspace |
-| D / L in the workspace header | toggle dwindle and scrolling |
-| enter | switch, or return to **Unsaved** |
-| n | save current as a named desk |
-| s | update desk you are on |
-| r | rename (display name; parking id stays) |
-| e | extras (DND Leave/On/Off, launch missing after reboot, theme Leave or Set) |
-| del | forget, with confirm (parked windows return to 1–10) |
+| 0–9 | put the cursor on that workspace (0 is 10) |
+| enter, or click a tile | go to that workspace |
+| drag a window pane onto another tile | move that window there |
+| drag a pane onto an empty tile | put it on that workspace |
+| drag a tile onto another tile (or an empty one) | swap the two workspaces' windows |
+| D / L in the tile header | toggle dwindle and scrolling |
 | esc | close (clear filter first if any) |
 
 ## Remove
@@ -90,28 +77,27 @@ o.bind("SUPER + D", "Desks", "omarchy-shell shell toggle com.mdtrr.omadesk")
 omarchy plugin remove com.mdtrr.omadesk
 ```
 
-Recipes live in `~/.config/omarchy/omadesk/desks.json`. Forget deletes the
-recipe and brings that desk's parked windows back onto 1–10. A **live** desk
-still has windows (on 1–10 or parked). A **dead** desk is recipe only.
-Switching into it after a reboot launches the saved windows if Launch
-Missing is on.
-Theme extras can leave the current theme or run `omarchy theme set`. On the
-desk you are on, that set runs as soon as you pick it. On another desk it
-runs when you switch in.
+Earlier versions kept named desks in `~/.config/omarchy/omadesk/desks.json`
+and parked windows on `special:omadesk-<id>-N` workspaces. Both are gone. The
+file is no longer read and is safe to delete. If a window is still parked on
+one of those special workspaces, move it back with
+`hyprctl dispatch movetoworkspace 1,address:<addr>`.
 
 ## Tests
 
 ```sh
 node tests/test_model.js
+node tests/check_refs.js
 omarchy plugin validate .
-qmllint -I "$OMARCHY_PATH/shell" Overlay.qml BarWidget.qml
 ```
 
 ## Security
 
 Plugins run unsandboxed inside the long-lived Omarchy shell process, with
 your user permissions. Review the code before you enable it. Hyprctl is
-the only command used to move windows; apps are launched with `uwsm-app`.
+the only command used to read and move windows. The D / L toggle also writes
+a workspace rule file under `~/.local/state/omarchy/workspace-layouts`, the
+same place Omarchy's own Super+L writes.
 
 ## Community
 

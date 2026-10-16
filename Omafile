@@ -1,5 +1,5 @@
 name = "Desks"
-summary = "Named-desk overlay for Omarchy"
+summary = "Workspace manager overlay for Omarchy"
 url = "https://github.com/modoterra/omadesk"
 
 [[actions]]
