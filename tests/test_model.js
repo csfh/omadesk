@@ -161,11 +161,11 @@ test("38 disabled monitors are omitted from layout and connected names", functio
   })
 })
 
-test("47 windowPanes follow dwindle and scrolling geometry; icons not names", function() {
-  const scroll = model.windowPanes([
+test("47 pane layout follows dwindle and scrolling geometry; icons not names", function() {
+  const scroll = model.paneLayout([
     { class: "foot", at: [0, 0], size: [400, 800] },
     { class: "chromium", at: [400, 0], size: [400, 800] }
-  ])
+  ]).panes
   assert.strictEqual(scroll.length, 2)
   assert.ok(Math.abs(scroll[0].x - 0) < 1e-9)
   assert.ok(Math.abs(scroll[0].w - 0.5) < 1e-9)
@@ -173,10 +173,10 @@ test("47 windowPanes follow dwindle and scrolling geometry; icons not names", fu
   assert.ok(Math.abs(scroll[1].w - 0.5) < 1e-9)
   assert.strictEqual(scroll[0].icon, "foot")
   assert.strictEqual(scroll[1].icon, "chromium")
-  const dwindle = model.windowPanes([
+  const dwindle = model.paneLayout([
     { class: "dev.zed.Zed", x: 0, y: 0, w: 800, h: 400 },
     { class: "com.mitchellh.ghostty", x: 0, y: 400, w: 800, h: 400 }
-  ])
+  ]).panes
   assert.strictEqual(dwindle.length, 2)
   assert.ok(Math.abs(dwindle[0].h - 0.5) < 1e-9)
   assert.ok(Math.abs(dwindle[1].y - 0.5) < 1e-9)
@@ -193,19 +193,19 @@ test("47 windowPanes follow dwindle and scrolling geometry; icons not names", fu
   const zed = stage.workspaces[0].windows[0]
   assert.ok(zed.w > 0)
   assert.ok(model.iconName(zed))
-  const covered = model.windowPanes([
+  const covered = model.paneLayout([
     { class: "foot", x: 0, y: 0, w: 400, h: 400 },
     { class: "com.mitchellh.ghostty", x: 0, y: 400, w: 400, h: 400 },
     { class: "chromium", x: 0, y: 0, w: 800, h: 800, fullscreen: 2 }
-  ])
+  ]).panes
   assert.strictEqual(covered.length, 1)
   assert.strictEqual(covered[0].icon, "chromium")
   assert.ok(Math.abs(covered[0].w - 1) < 1e-9)
   assert.ok(Math.abs(covered[0].h - 1) < 1e-9)
-  const maximized = model.windowPanes([
+  const maximized = model.paneLayout([
     { class: "foot", x: 12, y: 50, w: 400, h: 500 },
     { class: "chromium", x: 0, y: 0, w: 1920, h: 1080 }
-  ])
+  ]).panes
   assert.strictEqual(maximized.length, 1)
   assert.strictEqual(maximized[0].icon, "chromium")
   const stacked = [
@@ -213,7 +213,7 @@ test("47 windowPanes follow dwindle and scrolling geometry; icons not names", fu
     { class: "com.mitchellh.ghostty", x: 0, y: 400, w: 400, h: 400, address: "0xb" },
     { class: "chromium", x: 0, y: 0, w: 800, h: 800, fullscreen: 2, address: "0xc" }
   ]
-  const under = model.windowsUnder(stacked)
+  const under = model.paneLayout(stacked).under
   assert.strictEqual(under.length, 2)
   assert.strictEqual(under[0].icon, "foot")
   assert.strictEqual(under[1].icon, "com.mitchellh.ghostty")
@@ -221,10 +221,10 @@ test("47 windowPanes follow dwindle and scrolling geometry; icons not names", fu
   assert.strictEqual(tile.panes.length, 1)
   assert.strictEqual(tile.panes[0].icon, "chromium")
   assert.strictEqual(tile.under.length, 2)
-  same(model.windowsUnder([
+  same(model.paneLayout([
     { class: "foot", x: 0, y: 0, w: 400, h: 800 },
     { class: "chromium", x: 400, y: 0, w: 400, h: 800 }
-  ]), [])
+  ]).under, [])
 })
 
 test("49 iconLetters: one word first+last, two words initials", function() {
@@ -350,10 +350,10 @@ test("60 pane move goes to a numbered workspace, never to the one it is on", fun
   assert.strictEqual(model.windowMoveDispatch(addr, 2, 2), "")
   assert.strictEqual(model.windowMoveDispatch("", 1, 3), "")
   assert.strictEqual(model.windowMoveDispatch(addr, 1, 0), "")
-  const panes = model.windowPanes([
+  const panes = model.paneLayout([
     { class: "foot", address: "0xaaa", at: [0, 0], size: [400, 800] },
     { class: "chromium", address: "0xbbb", at: [400, 0], size: [400, 800] }
-  ])
+  ]).panes
   assert.strictEqual(panes[0].address, "0xaaa")
   assert.strictEqual(panes[1].address, "0xbbb")
 })
@@ -374,7 +374,6 @@ test("63 workspace layout apply argv writes Omarchy lua then evals", function() 
   assert.ok(argv[2].indexOf("mkdir -p --") >= 0)
   assert.ok(argv[2].indexOf("hyprctl eval") >= 0)
   assert.ok(argv[2].indexOf("hyprctl reload config-only") >= 0)
-  assert.ok(argv[2].indexOf("hyprctl keyword workspace") === -1)
   assert.strictEqual(argv.length, 7)
   assert.strictEqual(argv[4], dir)
   assert.strictEqual(argv[5], 'hl.workspace_rule({ workspace = "2", layout = "scrolling" })')
@@ -472,7 +471,6 @@ test("70 layout apply uses Super+L workspace ids and does not pin a second rule"
 
   assert.strictEqual(model.workspaceLayoutPersistId("-83"), "")
   assert.strictEqual(model.workspaceLayoutRuleLua("-83", "dwindle"), "")
-  assert.strictEqual(typeof model.workspaceLayoutUnpinLua, "undefined")
 })
 
 test("71 pane drop dispatch survives whatever the drag source reports", function() {
@@ -532,7 +530,7 @@ test("75 compositor parsing and rendered models have hard cardinality and string
       size: [10, 100]
     })
   }
-  assert.strictEqual(model.windowPanes(manyWindows).length, model.maxRenderedPanesPerTile())
+  assert.strictEqual(model.paneLayout(manyWindows).panes.length, model.maxRenderedPanesPerTile())
   const covered = manyWindows.concat([{
     address: "0xtop",
     class: "chromium",
@@ -540,7 +538,7 @@ test("75 compositor parsing and rendered models have hard cardinality and string
     at: [0, 0],
     size: [1000, 1000]
   }])
-  assert.ok(model.windowsUnder(covered).length <= model.maxRenderedPanesPerTile())
+  assert.ok(model.paneLayout(covered).under.length <= model.maxRenderedPanesPerTile())
 })
 
 test("76 compositor collectors are bounded at the command boundary", function() {

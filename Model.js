@@ -29,14 +29,6 @@ function maxStageClients() {
   return MAX_STAGE_CLIENTS_VALUE
 }
 
-function maxStageWorkspaces() {
-  return MAX_STAGE_WORKSPACES_VALUE
-}
-
-function maxStageMonitors() {
-  return MAX_STAGE_MONITORS_VALUE
-}
-
 function maxRenderedPanesPerTile() {
   return MAX_RENDERED_PANES_PER_TILE_VALUE
 }
@@ -455,12 +447,6 @@ function isArray(value) {
     return Array.isArray(value)
   }
   return Object.prototype.toString.call(value) === "[object Array]"
-}
-
-function errorMessage(err) {
-  if (!err) return "unknown error"
-  if (err.message) return String(err.message)
-  return String(err)
 }
 
 function parseJsonList(value, maxCount) {
@@ -914,14 +900,6 @@ function windowGeom(win) {
   if (Math.abs(x) > MAX_NUMERIC_MAGNITUDE_VALUE || Math.abs(y) > MAX_NUMERIC_MAGNITUDE_VALUE ||
       w > MAX_NUMERIC_MAGNITUDE_VALUE || h > MAX_NUMERIC_MAGNITUDE_VALUE) return null
   return { x: x, y: y, w: w, h: h }
-}
-
-function windowPanes(windows) {
-  return paneLayout(windows).panes
-}
-
-function windowsUnder(windows) {
-  return paneLayout(windows).under
 }
 
 function paneLayout(windows) {

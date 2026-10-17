@@ -62,10 +62,6 @@ Item {
     Qt.callLater(function() { keyCatcher.forceActiveFocus() })
   }
 
-  function close() {
-    root.opened = false
-  }
-
   function dismiss() {
     root.opened = false
     if (root.shell && typeof root.shell.hide === "function")
@@ -428,7 +424,6 @@ Item {
   component WorkspaceTile: BorderSurface {
     id: tile
     property var tileData: ({})
-    property bool compact: false
     property bool clickable: false
     signal activated()
     signal layoutChosen(string layout)
@@ -953,7 +948,6 @@ Item {
         spacing: Style.space(12)
 
         Item {
-          id: panelHero
           width: parent.width
           implicitHeight: Math.max(heroIcon.implicitHeight, heroLabels.implicitHeight, filterHint.implicitHeight)
 
@@ -1095,7 +1089,6 @@ Item {
         }
 
         Item {
-          id: shortcutBar
           width: parent.width
           implicitHeight: Style.space(22)
 
