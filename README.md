@@ -21,8 +21,6 @@ Nothing is parked, saved or restored: Hyprland owns placement, and the overlay
 reads it fresh every time it opens. Scratchpad and other special workspaces are
 never shown or touched.
 
-![Desks picker](preview.png)
-
 ## Install
 
 ```sh
