@@ -821,7 +821,7 @@ function workspaceTileN(ws, cap) {
   return 0
 }
 
-// One tile per workspace 1..limit, always in numeric order, so a workspace keeps
+// One tile per workspace 1..highest in use, always in numeric order, so a workspace keeps
 // its slot whether or not it has windows.
 function workspaceTiles(stage, limit) {
   var cap = Number(limit)
@@ -837,8 +837,14 @@ function workspaceTiles(stage, limit) {
     n = workspaceTileN(list[i], cap)
     if (n && !byN[n] && list[i] && isArray(list[i].windows) && list[i].windows.length) byN[n] = list[i]
   }
+  // Show 1..highest workspace in use, so gaps stay in place but nothing trails
+  // after the last busy one. The focused workspace counts as in use.
+  var top = 1
+  for (n = 1; n <= cap; n++) if (byN[n]) top = n
+  var focused = stage && stage.lastWorkspace != null ? Number(stage.lastWorkspace) : 0
+  if (focused >= 1 && focused <= cap && focused > top) top = Math.floor(focused)
   var tiles = []
-  for (n = 1; n <= cap; n++) {
+  for (n = 1; n <= top; n++) {
     var ws = byN[n]
     if (!ws) {
       var known = meta[n] || {}

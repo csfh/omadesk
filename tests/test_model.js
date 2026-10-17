@@ -77,7 +77,7 @@ test("24 pretty names still read well for desktop ids and PWA classes", function
   assert.strictEqual(model.prettyApp({ class: "org.gnome.Nautilus" }), "Files")
 })
 
-test("26 every workspace gets a slot in numeric order, empty ones are vacant", function() {
+test("26 tiles run 1..highest workspace in use in numeric order, gaps are vacant", function() {
   const live = {
     workspaces: [
       { n: 3, windows: [{ class: "chromium", title: "draft" }] },
@@ -86,19 +86,24 @@ test("26 every workspace gets a slot in numeric order, empty ones are vacant", f
     ]
   }
   const tiles = model.workspaceTiles(live)
-  assert.strictEqual(tiles.length, 10)
-  same(tiles.map((t) => t.n), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-  same(tiles.map((t) => t.vacant), [false, true, false, true, true, true, false, true, true, true])
+  assert.strictEqual(tiles.length, 7)
+  same(tiles.map((t) => t.n), [1, 2, 3, 4, 5, 6, 7])
+  same(tiles.map((t) => t.vacant), [false, true, false, true, true, true, false])
   assert.strictEqual(tiles[0].label, "Zed · charcana")
   assert.strictEqual(tiles[1].label, "Empty")
   assert.strictEqual(tiles[1].panes.length, 0)
   // A smaller limit trims the slots; a bad one falls back to ten.
-  assert.strictEqual(model.workspaceTiles(live, 4).length, 4)
-  assert.strictEqual(model.workspaceTiles(live, 99).length, 10)
-  assert.strictEqual(model.workspaceTiles(live, "x").length, 10)
+  assert.strictEqual(model.workspaceTiles(live, 4).length, 3)
+  assert.strictEqual(model.workspaceTiles(live, 99).length, 7)
+  assert.strictEqual(model.workspaceTiles(live, "x").length, 7)
+  // Workspace 10 in use shows all ten; the focused workspace counts as in use.
+  const far = { workspaces: [{ n: 10, windows: [{ class: "chromium", title: "x" }] }] }
+  assert.strictEqual(model.workspaceTiles(far).length, 10)
+  assert.strictEqual(model.workspaceTiles({ workspaces: live.workspaces, lastWorkspace: 9 }).length, 9)
+  assert.strictEqual(model.workspaceTiles({ workspaces: live.workspaces, lastWorkspace: 2 }).length, 7)
   // Moving windows around never moves a workspace's slot.
   const moved = { workspaces: [{ n: 2, windows: [{ class: "chromium", title: "draft" }] }] }
-  same(model.workspaceTiles(moved).map((t) => t.n), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  same(model.workspaceTiles(moved).map((t) => t.n), [1, 2])
   const many = {
     workspaces: [{
       n: 2,
@@ -260,18 +265,18 @@ test("51 focusWorkspaceN only accepts workspaces 1-10", function() {
 test("52 live tiles use n not id, and an unseen workspace is vacant", function() {
   const stage = model.parseStage(clientsText, workspacesText)
   const tiles = model.workspaceTiles(stage)
-  assert.strictEqual(tiles.length, 10)
+  assert.ok(tiles.length >= 3 && tiles.length <= 10)
   tiles.forEach((t) => {
     assert.ok(t.n >= 1 && t.n <= 10)
     assert.strictEqual(t.id, undefined)
   })
-  same(tiles.map((t) => t.vacant), [false, false, false, true, true, true, true, true, true, true])
-  assert.strictEqual(model.workspaceTiles({}).length, 10)
+  assert.ok(tiles.slice(0, 3).every((t) => !t.vacant))
+  assert.strictEqual(model.workspaceTiles({}).length, 1)
   assert.ok(model.workspaceTiles({}).every((t) => t.vacant))
   const bogus = model.workspaceTiles({ workspaces: [{ n: 1, windows: 2 }, { n: 8, windows: 0 }] })
   assert.ok(bogus.every((t) => t.vacant))
   // A vacant tile still carries the layout Hyprland reports for that workspace.
-  const withMeta = model.workspaceTiles({ workspaces: [], layoutMeta: { 4: { hyprId: 4, tiledLayout: "scrolling" } } })
+  const withMeta = model.workspaceTiles({ workspaces: [], lastWorkspace: 5, layoutMeta: { 4: { hyprId: 4, tiledLayout: "scrolling" } } })
   assert.strictEqual(withMeta[3].tiledLayout, "scrolling")
   assert.strictEqual(withMeta[3].hyprId, 4)
   assert.strictEqual(withMeta[4].tiledLayout, "dwindle")
@@ -355,9 +360,7 @@ test("60 pane move goes to a numbered workspace, never to the one it is on", fun
 
 test("61 pane move target is any empty workspace, and parseStage exposes layouts", function() {
   const stage = model.parseStage(clientsText, workspacesText)
-  const vacant = model.workspaceTiles(stage).filter((t) => t.vacant)
-  assert.strictEqual(vacant[0].n, 4)
-  assert.strictEqual(model.windowMoveDispatch("0xaaa", 1, vacant[0].n).indexOf('workspace = "4"') >= 0, true)
+  assert.strictEqual(model.windowMoveDispatch("0xaaa", 1, 4).indexOf('workspace = "4"') >= 0, true)
   assert.strictEqual(model.windowMoveDispatch("0xaaa", 1, 9).indexOf('workspace = "9"') >= 0, true)
   assert.strictEqual(typeof stage.layoutMeta, "object")
   assert.strictEqual(typeof model.emptyStage().layoutMeta, "object")
@@ -554,7 +557,9 @@ test("76 compositor collectors are bounded at the command boundary", function() 
 
 test("77 filterTiles matches workspace number or app label, keeping numeric order", function() {
   const stage = model.parseStage(clientsText, workspacesText)
+  stage.workspaces.push({ n: 10, windows: [{ class: "chromium", title: "far" }] })
   const tiles = model.workspaceTiles(stage)
+  assert.strictEqual(tiles.length, 10)
   assert.strictEqual(model.filterTiles(tiles, "").length, tiles.length)
   assert.strictEqual(model.filterTiles(tiles, "   ").length, tiles.length)
   const byNumber = model.filterTiles(tiles, "2")

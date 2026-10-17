@@ -12,14 +12,14 @@
 ```
 
 Workspace manager overlay for Omarchy Quattro. A desk here is an ordinary
-Hyprland workspace, 1–10. The overlay shows all ten as tiles in a fixed
-order, 1–5 on top and 6–10 below, so a workspace never changes place when it
-fills up or empties. Occupied ones are drawn from the real window geometry,
-with app icons, at the monitor's aspect ratio; the rest are empty slots you can
-drop windows onto. Nothing is
-parked, saved or restored: Hyprland owns placement, and the overlay reads it
-fresh every time it opens. Scratchpad and other special workspaces are never
-shown or touched.
+Hyprland workspace, 1–10. The overlay shows workspaces 1 up to the highest one
+in use (or the one you are on) as tiles in a fixed order, five per row, so a
+workspace never changes place when it fills up or empties. Occupied ones are
+drawn from the real window geometry, with app icons, at the monitor's aspect
+ratio; gaps below the highest are empty slots you can drop windows onto.
+Nothing is parked, saved or restored: Hyprland owns placement, and the overlay
+reads it fresh every time it opens. Scratchpad and other special workspaces are
+never shown or touched.
 
 ![Desks picker](preview.png)
 
@@ -63,7 +63,7 @@ o.bind("SUPER + D", "Desks", "omarchy-shell shell toggle com.mdtrr.omadesk")
 | Super+D | toggle overlay |
 | / | start filter by workspace number or app (Esc leaves) |
 | j / k, arrows, h l | move cursor |
-| 0–9 | put the cursor on that workspace (0 is 10) |
+| 0–9 | put the cursor on that workspace if it is shown (0 is 10) |
 | enter, or click a tile | go to that workspace |
 | drag a window pane onto another tile | move that window there |
 | drag a pane onto an empty tile | put it on that workspace |
